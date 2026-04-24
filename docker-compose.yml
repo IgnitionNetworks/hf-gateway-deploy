@@ -2,6 +2,10 @@ services:
   ignition-hf-gateway:
     image: ghcr.io/ignitionnetworks/ignition-hf-gateway:${VERSION:-latest}
     network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_BROADCAST
+      - SYS_PTRACE
     volumes:
       - ./config:/config
       - ./prompts:/prompts
