@@ -1,9 +1,9 @@
 services:
   ignition-hf-gateway:
-    image: ghcr.io/ignitionnetworks/codan-hf-gateway:${VERSION:-latest}
+    image: ghcr.io/ignitionnetworks/ignition-hf-gateway:${VERSION:-latest}
     network_mode: host
     volumes:
-      - ./config/config.jsonc:/config/config.jsonc:ro
+      - ./config/config.jsonc:/config/config.jsonc:rw
       - ./data:/data
       - ./logs:/logs
     environment:
