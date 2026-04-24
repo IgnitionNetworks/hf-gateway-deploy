@@ -1,16 +1,33 @@
 services:
   ignition-hf-gateway:
-    image: ghcr.io/ignitionnetworks/ignition-hf-gateway:${VERSION:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ignition-hf-gateway:latest
     network_mode: host
     volumes:
-      - ./config/config.jsonc:/config/config.jsonc:rw
-      - ./prompts:/prompts
-      - ./data:/data
-      - ./logs:/logs
+      - ./rtp_gateway/example_config.jsonc:/config/config.jsonc:rw
+      - ./rtp_gateway/example_config.key:/config/example_config.key:ro
+      - logs:/logs
+      - data:/data
     environment:
       - IGNITION_CONFIG=/config/config.jsonc
       - IGNITION_LOG_DIR=/logs
+      - IGNITION_UI_DIST=/app/web_ui/dist
       - IGNITION_AUTH_DB=/data/auth.db
       - IGNITION_MSG_DB=/data/messages.db
-      - IGNITION_PROMPT_DIR=/prompts
     restart: unless-stopped
+
+volumes:
+  logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+  data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data
