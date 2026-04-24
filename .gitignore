@@ -1,6 +1,5 @@
-# Active config — copy from config.example.jsonc and fill in your values
+# Active config — copy from starter_config.jsonc and fill in your values
 config/config.jsonc
-config/config.key
 
 # Runtime data and logs — auto-created by the containers
 data/*.db
