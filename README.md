@@ -262,17 +262,17 @@ curl http://localhost:8000/api/license | python3 -m json.tool
 - `status: "Expired"` — licence has expired; contact [contact@ignition.net.nz](mailto:contact@ignition.net.nz)
 - `is_valid: false` with no other error — unique key may not match (e.g. after moving to a new machine or recreating the container with a different instance ID)
 
-The unique key is derived from the container's machine ID. To keep it stable across container recreations, set `CODAN_INSTANCE_ID` in your `.env`:
+The unique key is derived from the container's machine ID. To keep it stable across container recreations, set `IGNITION_INSTANCE_ID` in your `.env`:
 
 ```bash
 # .env
-CODAN_INSTANCE_ID=my-stable-instance-id   # any unique string; does not change
+IGNITION_INSTANCE_ID=my-stable-instance-id   # any unique string; does not change
 ```
 
 And add it to `docker-compose.yml` under `environment`:
 ```yaml
 environment:
-  - CODAN_INSTANCE_ID=${CODAN_INSTANCE_ID}
+  - IGNITION_INSTANCE_ID=${IGNITION_INSTANCE_ID}
 ```
 
 ---
