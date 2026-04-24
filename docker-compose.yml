@@ -3,7 +3,6 @@ services:
     image: ghcr.io/ignitionnetworks/codan-hf-gateway:${VERSION:-latest}
     volumes:
       - ./config/config.jsonc:/config/config.jsonc:ro
-      - ./config/config.key:/config/config.key:ro
       - ipc:/tmp
       - ./logs:/logs
     network_mode: host
@@ -15,7 +14,6 @@ services:
       - "${WEB_PORT:-8000}:8000"
     volumes:
       - ./config/config.jsonc:/config/config.jsonc:ro
-      - ./config/config.key:/config/config.key:ro
       - ipc:/tmp
       - ./data:/data
       - ./logs:/logs

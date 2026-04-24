@@ -139,12 +139,6 @@ If you are locked out:
 docker compose exec backend reset_admin_password.sh
 ```
 
-Or from the host using the bundled script:
-
-```bash
-CODAN_AUTH_DB=./data/auth.db ./scripts/reset_admin_password.sh
-```
-
 ---
 
 ## Directory Layout
@@ -156,9 +150,7 @@ hf-gateway-deploy/
 ├── config/
 │   └── starter_config.jsonc  — radio/system config template
 ├── data/                   — SQLite databases (auto-created, do not commit)
-├── logs/                   — runtime logs (auto-created)
-└── scripts/
-    └── reset_admin_password.sh
+└── logs/                   — runtime logs (auto-created)
 ```
 
 ---
