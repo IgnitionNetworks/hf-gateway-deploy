@@ -287,7 +287,7 @@ environment:
 Images are published to the GitHub Container Registry (GHCR):
 
 ```
-ghcr.io/ignitionnetworks/codan-hf-gateway
+ghcr.io/ignitionnetworks/ignition-hf-gateway
 ```
 
 Tags follow semantic versioning (`v1.2.3`) plus `latest`.
