@@ -1,0 +1,12 @@
+# Active config — copy from config.example.jsonc and fill in your values
+config/config.jsonc
+config/config.key
+
+# Runtime data and logs — auto-created by the containers
+data/*.db
+!data/.gitkeep
+logs/*.log
+!logs/.gitkeep
+
+# Environment file — copy from .env.example
+.env

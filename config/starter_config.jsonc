@@ -1,0 +1,6 @@
+{
+  "ipc": {
+    "socket_path": "/tmp/codan_rtp_gateway.sock"
+  },
+  "radios": []
+}
