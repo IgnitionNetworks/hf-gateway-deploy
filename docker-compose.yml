@@ -1,30 +1,14 @@
 services:
-  rtp-gateway:
+  ignition-hf-gateway:
     image: ghcr.io/ignitionnetworks/codan-hf-gateway:${VERSION:-latest}
-    volumes:
-      - ./config/config.jsonc:/config/config.jsonc:ro
-      - ipc:/tmp
-      - ./logs:/logs
     network_mode: host
-    restart: unless-stopped
-
-  backend:
-    image: ghcr.io/ignitionnetworks/codan-hf-backend:${VERSION:-latest}
-    ports:
-      - "${WEB_PORT:-8000}:8000"
     volumes:
       - ./config/config.jsonc:/config/config.jsonc:ro
-      - ipc:/tmp
       - ./data:/data
       - ./logs:/logs
     environment:
-      - CODAN_CONFIG=/config/config.jsonc
-      - CODAN_LOG_DIR=/logs
-      - CODAN_AUTH_DB=/data/auth.db
-      - CODAN_MSG_DB=/data/messages.db
-    depends_on:
-      - rtp-gateway
+      - IGNITION_CONFIG=/config/config.jsonc
+      - IGNITION_LOG_DIR=/logs
+      - IGNITION_AUTH_DB=/data/auth.db
+      - IGNITION_MSG_DB=/data/messages.db
     restart: unless-stopped
-
-volumes:
-  ipc:

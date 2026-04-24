@@ -95,7 +95,7 @@ Edit `.env` if you want a different port (default: 8000) or to pin to a specific
 docker compose up -d
 ```
 
-Pull and start. The gateway container uses `network_mode: host` for direct RTP/SIP access; the backend container exposes the web UI on the configured port.
+Pull and start. The container runs the RTP gateway and web backend together using `network_mode: host` for direct RTP/SIP access. The web UI is available on port 8000.
 
 ### 5. Access the web UI
 
@@ -136,7 +136,7 @@ Data in `./data/` (users, sessions, message history) is preserved across upgrade
 If you are locked out:
 
 ```bash
-docker compose exec backend reset_admin_password.sh
+docker compose exec ignition-hf-gateway reset_admin_password.sh
 ```
 
 ---
@@ -181,11 +181,6 @@ For licensing enquiries, volume pricing, or support contracts, contact us at **[
 - The gateway uses `network_mode: host` — check that RTP ports (default 50010–50020) are not blocked by a firewall
 - Check `docker compose logs rtp-gateway` for SDK errors
 
-**IPC socket not found (backend can't reach gateway)**
-- Both containers share `/tmp` via the `ipc` Docker volume
-- Check the socket exists: `docker compose exec backend ls /tmp/codan_rtp_gateway.sock`
-- If missing, the gateway may not have started — check its logs
-
 **Licence errors**
 - Ensure `license.registration_code` in `config.jsonc` matches your licence
 
@@ -193,10 +188,9 @@ For licensing enquiries, volume pricing, or support contracts, contact us at **[
 
 ## Image Registry
 
-Images are published to the GitHub Container Registry (GHCR):
+The image is published to the GitHub Container Registry (GHCR):
 
 - `ghcr.io/ignitionnetworks/codan-hf-gateway`
-- `ghcr.io/ignitionnetworks/codan-hf-backend`
 
 Tags follow semantic versioning (`v1.2.3`) plus `latest`.
 
