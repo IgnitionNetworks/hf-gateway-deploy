@@ -1,6 +1,133 @@
 {
+  // Internal IPC socket — do not change unless you have a specific reason to.
   "ipc": {
-    "socket_path": "/tmp/codan_rtp_gateway.sock"
+    "socket_path": "/tmp/ignition_hf_gateway.sock"
   },
-  "radios": []
+
+  // ── Radios ─────────────────────────────────────────────────────────────────
+  // Add one entry per Codan Envoy radio. All radios start disabled; set
+  // "enabled": true once the radio IP and any other fields are configured.
+  //
+  // Tip: configure radios from the web UI (Settings → Radios) and save — the
+  // file is updated automatically. This template covers all available fields.
+  "radios": [
+    {
+      "enabled": false,                   // Set to true when ready
+      "name": "Radio 1",                  // Display name (must be unique)
+      "ip": "192.168.1.100",              // Radio IP address
+      "sdk_alias": "CodanRtpGateway",     // Alias registered with the radio SDK
+      "rfu_alias": "",                    // Optional RFU alias
+      "codec": "pcmu",                    // pcmu | pcma | gsm | opus
+      "sample_rate_hz": 8000,
+
+      // RTP streaming — required for browser audio and RTP-based routing
+      "rtp": {
+        "bind_ip": "0.0.0.0",            // Local IP to bind UDP socket (0.0.0.0 = any)
+        "local_port": 50010,              // Local UDP port for RTP
+        "remote_ip": "",                  // Remote RTP destination IP (leave empty to skip)
+        "remote_port": 0,                 // Remote RTP destination port
+        "packet_ms": 20                   // RTP packet duration in milliseconds
+      },
+
+      // Uplink — transmit audio from RTP/SIP back to the radio
+      "uplink": {
+        "enabled": false,
+        "auto_ptt": true,                 // Automatically key PTT when audio arrives
+        "ptt_idle_ms": 500                // Release PTT after this many ms of silence
+      },
+
+      // SIP — connect the radio to a SIP/VoIP telephone system
+      "sip": {
+        "enabled": false,
+        "registrar": "sip:pbx.example.com",
+        "username": "",
+        "password": "",                   // Stored encrypted after first save via UI
+        "display_name": "HF Radio",
+        "transport": "udp",               // udp | tcp | tls
+        "auto_answer": true,
+        "auto_answer_delay_ms": 0,
+        "stun_servers": [],
+        "ice_enabled": false,
+        "auto_answer_hf_call": false,     // Bridge inbound HF phone calls to SIP
+        "answer_timeout_sec": 30,
+        "dtmf_ptt": {
+          "enabled": false,
+          "ptt_key": "#",                 // DTMF digit that toggles PTT
+          "suppress": true,               // Zero out the DTMF tone before sending to radio
+          "ptt_timeout_ms": 30000
+        },
+        "vox": {
+          "enabled": false,
+          "on_level_db": -40,
+          "off_level_db": -50,
+          "hang_time_ms": 500
+        },
+        "ivr": {
+          "enabled": false               // IVR flows are managed via the web UI
+        }
+      },
+
+      // Browser audio streaming (requires Web Audio license)
+      "web_audio": {
+        "enabled": false
+      },
+
+      // Instant Connect Enterprise stream binding (requires Instant Connect license)
+      "ice_stream_id": "",
+
+      // Scan / Software VAD (requires Virtual Radios license)
+      "suppress_scan_audio": true,
+      "custom_scan_enabled": false,
+      "vote_noise_floor_db": -80,
+
+      "diagnostics_mode": false
+    }
+  ],
+
+  // ── Virtual Radios ─────────────────────────────────────────────────────────
+  // Virtual radio groups for RX voting and split-site operation.
+  // Requires Virtual Radios license. Managed via the web UI.
+  "virtual_radios": [],
+
+  // ── License ────────────────────────────────────────────────────────────────
+  // Obtain your unique key from the web UI (Settings → License) then email
+  // contact@ignition.net.nz to receive your registration code.
+  "license": {
+    "registration_code": "",             // Paste your registration code here
+    "app_id": 5
+  },
+
+  // ── Instant Connect Enterprise ─────────────────────────────────────────────
+  // Pushes radio channel names to an ICE system when the channel changes.
+  // Requires Instant Connect license.
+  "ice": {
+    "enabled": false,
+    "hostname": "",                       // ICE server hostname (no https://)
+    "api_key": "",                        // ICE API bearer token
+    "prefix": ""                          // Optional channel name prefix (e.g. "HF")
+  },
+
+  // ── Email Notifications (SMTP) ─────────────────────────────────────────────
+  "smtp": {
+    "enabled": false,
+    "host": "smtp.example.com",
+    "port": 587,
+    "username": "",
+    "password": "",                       // Stored encrypted after first save via UI
+    "from_address": "hf-gateway@example.com",
+    "use_tls": true
+  },
+
+  // ── Authentication ─────────────────────────────────────────────────────────
+  "auth": {
+    "ldap": {
+      "enabled": false,
+      "server": "",                       // e.g. ldap://ad.example.com
+      "base_dn": "",                      // e.g. DC=example,DC=com
+      "bind_dn": "",
+      "bind_password": "",
+      "user_search_filter": "(sAMAccountName={username})",
+      "timeout_seconds": 5
+    }
+  }
 }
