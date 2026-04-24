@@ -4,6 +4,7 @@ services:
     network_mode: host
     volumes:
       - ./config/config.jsonc:/config/config.jsonc:rw
+      - ./prompts:/prompts
       - ./data:/data
       - ./logs:/logs
     environment:
@@ -11,4 +12,5 @@ services:
       - IGNITION_LOG_DIR=/logs
       - IGNITION_AUTH_DB=/data/auth.db
       - IGNITION_MSG_DB=/data/messages.db
+      - IGNITION_PROMPT_DIR=/prompts
     restart: unless-stopped

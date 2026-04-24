@@ -72,6 +72,11 @@
         "enabled": false
       },
 
+      // Audio files — defaults in ./prompts/ are provided; replace with your own WAVs.
+      // Both fall back to built-in generated tones if the file is missing or path is empty.
+      "ringtone_path": "/prompts/ringtone.wav",    // Played to inbound SIP caller while HF call is set up
+      "deny_tone_path": "/prompts/deny_tone.wav",  // Played when a call is rejected or times out
+
       // Instant Connect Enterprise stream binding (requires Instant Connect license)
       "ice_stream_id": "",
 

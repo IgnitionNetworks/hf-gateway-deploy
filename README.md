@@ -176,9 +176,14 @@ hf-gateway-deploy/
 ├── config/
 │   ├── starter_config.jsonc  — copy this to config.jsonc to get started
 │   └── config.jsonc          — your active config (gitignored)
+├── prompts/                  — WAV audio files served to callers
+│   ├── ringtone.wav          — ringback tone heard while HF call connects (replaceable)
+│   └── deny_tone.wav         — tone played when a call is rejected or times out (replaceable)
 ├── data/                     — SQLite databases (auth, messages — gitignored)
 └── logs/                     — runtime logs (gateway, backend, supervisord — gitignored)
 ```
+
+The `prompts/` directory is mounted at `/prompts` inside the container. Replace either WAV file with your own 8 kHz mono PCM WAV to customise call audio. IVR flow prompt files uploaded via the web UI are also stored here.
 
 ---
 
