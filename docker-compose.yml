@@ -6,6 +6,7 @@ services:
       - NET_ADMIN
       - NET_BROADCAST
       - SYS_PTRACE
+      - SYS_NICE
     volumes:
       - ./config:/config
       - ./prompts:/prompts
