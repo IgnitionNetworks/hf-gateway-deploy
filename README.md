@@ -250,23 +250,33 @@ docker compose up -d
 
 ### View logs
 
-The container writes to three log files under `./logs/`:
+All log files are written under `./logs/` on the host:
 
-| File | Contents |
-|---|---|
-| `./logs/gateway.log` | C++ RTP gateway — SDK connections, RTP, SIP, codec |
-| `./logs/backend.log` | Python web backend — API, WebSocket, IPC, notifications |
-| `./logs/supervisord.log` | Process supervisor — start/stop/restart events |
+| File | Contents | Rotation |
+|---|---|---|
+| `gateway.log` | C++ RTP gateway — radio SDK, RTP, codec, call events | 20 MB × 5 |
+| `backend.log` | Python web backend — API, WebSocket, IPC, auth, notifications | 20 MB × 10 |
+| `backend-stderr.log` | Uvicorn stderr — startup messages and unhandled exceptions | 5 MB × 2 |
+| `supervisord.log` | Process supervisor — service start/stop/restart events | 10 MB × 3 |
+| `entrypoint.log` | Container startup diagnostics — hostname resolution, SDK port checks | unbounded |
+| `smtp.log` | Email notification activity (DEBUG level; also appears in `backend.log`) | 20 MB × 10 |
+| `sip.log` | PJSIP trace — SIP registration, calls, errors *(only created if SIP is enabled)* | unbounded |
 
 ```bash
-# Tail both processes together
-docker compose logs -f
-
-# Gateway process only (C++ RTP gateway)
+# Follow gateway and radio events
 tail -f ./logs/gateway.log
 
-# Web backend only (API, auth, notifications)
+# Follow backend API, auth, and notification activity
 tail -f ./logs/backend.log
+
+# Follow both together
+tail -f ./logs/gateway.log ./logs/backend.log
+
+# Check container startup and SDK port diagnostics
+cat ./logs/entrypoint.log
+
+# Supervisor process events (start/stop/crash)
+tail -f ./logs/supervisord.log
 ```
 
 ### Stop
@@ -337,7 +347,7 @@ hf-gateway-deploy/
 │   ├── ringtone.wav          — ringback tone heard while HF call connects (replaceable)
 │   └── deny_tone.wav         — tone played when a call is rejected or times out (replaceable)
 ├── data/                     — SQLite databases (auth, messages — gitignored)
-└── logs/                     — runtime logs (gateway, backend, supervisord — gitignored)
+└── logs/                     — runtime logs (gitignored; see Operations → View logs for file list)
 ```
 
 The `prompts/` directory is mounted at `/prompts` inside the container. Replace either WAV file with your own 8 kHz mono PCM WAV to customise call audio. IVR flow prompt files uploaded via the web UI are also stored here.
@@ -373,10 +383,14 @@ docker compose ps
 The `ignition-hf-gateway` container should show `Up`. If it has exited or is restarting:
 
 ```bash
-docker compose logs ignition-hf-gateway
-# or check the log files directly:
+# Supervisor process events — what started, crashed, or restarted
 cat ./logs/supervisord.log
-cat ./logs/backend.log
+
+# Backend startup errors (uvicorn stderr — config parse failures, import errors)
+cat ./logs/backend-stderr.log
+
+# Container startup diagnostics — hostname resolution, SDK port conflicts
+cat ./logs/entrypoint.log
 ```
 
 Common causes:
@@ -393,6 +407,7 @@ Look for SDK errors or connection refused messages. Common causes:
 - Radio IP unreachable from the host — verify with `ping <radio-ip>`
 - The container uses `network_mode: host` — confirm that UDP ports (default 50010+) are not blocked by a host firewall
 - Radio SDK alias mismatch — the `sdk_alias` in config must match what the radio expects
+- SDK ports 5000–5009 already in use on the host — check `./logs/entrypoint.log` for port conflict warnings
 
 ### Audio not working in browser
 
@@ -408,6 +423,10 @@ Look for WebSocket or web audio errors. Common causes:
 ### SIP registration failing
 
 ```bash
+# SIP-specific trace log (only exists when SIP is enabled in config)
+tail -f ./logs/sip.log
+
+# Gateway log also contains SIP connection events
 grep -i "sip\|registration\|401\|403" ./logs/gateway.log | tail -30
 ```
 
@@ -415,6 +434,14 @@ Common causes:
 - Wrong username, password, or registrar address in config
 - SIP feature not licensed
 - Network firewall blocking SIP ports (5060 UDP/TCP)
+
+### Email notifications not sending
+
+```bash
+tail -f ./logs/smtp.log
+```
+
+The SMTP log is written at DEBUG level and captures every send attempt, authentication step, and error. All entries also appear in `backend.log`.
 
 ### Licence errors
 
