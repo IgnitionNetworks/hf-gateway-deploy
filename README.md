@@ -168,6 +168,84 @@ Default credentials: **admin / changeme**
 
 ---
 
+## Air-gap Installation
+
+For hosts with no internet access, export the Docker images on a connected machine, transfer them, and load them on the target.
+
+Two images are required:
+| Image | Purpose |
+|---|---|
+| `ghcr.io/ignitionnetworks/ignition-hf-gateway:<version>` | Gateway + web backend |
+| `nginx:alpine` | Reverse proxy / SSL termination |
+
+### Step 1 — Export images (internet-connected machine)
+
+```bash
+# Replace v1.2.3 with the release you are deploying
+VERSION=v1.2.3
+
+docker pull ghcr.io/ignitionnetworks/ignition-hf-gateway:${VERSION}
+docker pull nginx:alpine
+
+docker save ghcr.io/ignitionnetworks/ignition-hf-gateway:${VERSION} \
+    | gzip > ignition-hf-gateway-${VERSION}.tar.gz
+
+docker save nginx:alpine | gzip > nginx-alpine.tar.gz
+```
+
+### Step 2 — Transfer to the target host
+
+Copy both `.tar.gz` files and the contents of this repository to the airgapped host via USB drive, secure file transfer, or your organisation's approved media:
+
+```
+ignition-hf-gateway-v1.2.3.tar.gz
+nginx-alpine.tar.gz
+hf-gateway-deploy/          ← this repository
+```
+
+### Step 3 — Load images (target host)
+
+```bash
+docker load < ignition-hf-gateway-v1.2.3.tar.gz
+docker load < nginx-alpine.tar.gz
+```
+
+Confirm both images are present:
+
+```bash
+docker images | grep -E "ignition-hf-gateway|nginx"
+```
+
+### Step 4 — Pin the version and start
+
+Edit `.env` to pin to the exact version you loaded (this prevents Docker from attempting a pull at startup):
+
+```bash
+# .env
+VERSION=v1.2.3
+```
+
+Then follow the standard installation steps (configure, generate certs, start):
+
+```bash
+bash certs/generate-self-signed.sh
+docker compose up -d
+```
+
+### Upgrading on an air-gapped host
+
+Repeat Steps 1–3 for the new release, then:
+
+```bash
+# Update the pinned version
+sed -i 's/VERSION=.*/VERSION=v1.3.0/' .env
+
+# Restart — uses the locally loaded image, no pull attempted
+docker compose up -d
+```
+
+---
+
 ## Operations
 
 ### View logs
@@ -199,12 +277,33 @@ docker compose down
 
 ### Upgrade to a new release
 
+> [!IMPORTANT]
+> Read the release notes before upgrading. Some releases include a configuration migration step that must be completed before restarting services.
+
+Data in `./data/` (users, sessions, message history), `./config/config.jsonc`, and `./certs/` are preserved across upgrades.
+
+#### Online upgrade (internet-connected host)
+
 ```bash
+# Pull the latest gateway image (nginx:alpine is pulled automatically if not cached)
 docker compose pull
+
+# Restart containers with the new image
 docker compose up -d
 ```
 
-Data in `./data/` (users, sessions, message history) and `./config/config.jsonc` are preserved across upgrades.
+To pin to a specific release rather than always running `latest`, set the version in `.env`:
+
+```bash
+# .env
+VERSION=v1.3.0
+```
+
+Then pull and restart as above. To roll back, set `VERSION` to the previous tag and run `docker compose up -d` — Docker will use the locally cached image without re-pulling.
+
+#### Air-gap upgrade (no internet on target host)
+
+See the **Air-gap Installation** section below for how to transfer a new image to an isolated host.
 
 ### Reset admin password
 
