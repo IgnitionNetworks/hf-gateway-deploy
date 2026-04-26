@@ -1,7 +1,22 @@
+# Ignition HF Gateway — Production deployment with nginx SSL termination
+#
+# Quick start:
+#   1. Generate a self-signed certificate (for testing / internal use):
+#        bash certs/generate-self-signed.sh
+#
+#      OR obtain a trusted certificate via Let's Encrypt (requires a public domain):
+#        bash scripts/letsencrypt-setup.sh your.domain.com admin@example.com
+#
+#   2. docker compose up -d
+#
+# If you already have an nginx reverse proxy or SSL offload appliance upstream,
+# use docker-compose.template.yml instead — it exposes port 8000 directly
+# without the bundled nginx.
+
 services:
   ignition-hf-gateway:
     image: ghcr.io/ignitionnetworks/ignition-hf-gateway:${VERSION:-latest}
-    network_mode: host
+    network_mode: host          # required for RTP/UDP and Codan SDK network binding
     cap_add:
       - NET_ADMIN
       - NET_BROADCAST
@@ -18,4 +33,17 @@ services:
       - IGNITION_AUTH_DB=/data/auth.db
       - IGNITION_MSG_DB=/data/messages.db
       - IGNITION_PROMPT_DIR=/prompts
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+      - ./nginx/certbot-webroot:/var/www/certbot:ro   # used during Let's Encrypt renewal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"           # reaches gateway on host network
     restart: unless-stopped

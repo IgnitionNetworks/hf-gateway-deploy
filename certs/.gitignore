@@ -1,0 +1,8 @@
+# Never commit certificates or private keys
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+letsencrypt/

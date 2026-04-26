@@ -1,0 +1,38 @@
+# Ignition HF Gateway — Bare deployment (no bundled nginx)
+#
+# Use this compose file if you already have an nginx reverse proxy, an SSL
+# offload appliance, or a load balancer handling TLS termination upstream.
+# It exposes the backend directly on port 8000 (HTTP only).
+#
+# Usage:
+#   docker compose -f docker-compose.template.yml up -d
+#
+# Your upstream proxy should:
+#   - Forward all traffic to <host>:8000
+#   - Pass the Upgrade / Connection headers for the WebSocket path (/ws)
+#   - Set X-Forwarded-Proto: https so the app knows it is behind HTTPS
+#
+# For a self-contained deployment with bundled nginx SSL termination use the
+# default docker-compose.yml instead.
+
+services:
+  ignition-hf-gateway:
+    image: ghcr.io/ignitionnetworks/ignition-hf-gateway:${VERSION:-latest}
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_BROADCAST
+      - SYS_PTRACE
+      - SYS_NICE
+    volumes:
+      - ./config:/config
+      - ./prompts:/prompts
+      - ./data:/data
+      - ./logs:/logs
+    environment:
+      - IGNITION_CONFIG=/config/config.jsonc
+      - IGNITION_LOG_DIR=/logs
+      - IGNITION_AUTH_DB=/data/auth.db
+      - IGNITION_MSG_DB=/data/messages.db
+      - IGNITION_PROMPT_DIR=/prompts
+    restart: unless-stopped

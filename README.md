@@ -71,6 +71,8 @@ Incoming call records and SELCAL/ALE messages are logged and accessible through 
 - [Docker Compose](https://docs.docker.com/compose/install/) v2 (bundled with Docker Desktop or installed via the plugin)
 - Codan Envoy HF radio reachable over IP
 - A valid Ignition Networks HF Gateway licence
+- `openssl` on the host (for generating self-signed certificates; pre-installed on most Linux distributions)
+- Ports 80 and 443 open in your firewall
 
 If you have problems installing Docker on Ubuntu 24.04 - try these things
 
@@ -109,19 +111,56 @@ Edit `config/config.jsonc` — at minimum set the radio `ip` address and set `en
 cp .env.example .env
 ```
 
-Edit `.env` if you want a different port (default: 8000) or to pin to a specific image version.
+Edit `.env` if you want to pin to a specific image version.
 
-### 4. Start
+### 4. Set up SSL
+
+The default deployment uses nginx for HTTPS. Choose one of the options below before starting.
+
+#### Option A — Self-signed certificate (quick start / internal networks)
+
+Generates a certificate in seconds. Browsers will show a one-time security warning; accept it or add the certificate to your OS trust store.
+
+```bash
+bash certs/generate-self-signed.sh
+```
+
+#### Option B — Let's Encrypt (internet-facing / trusted certificate)
+
+Requires a public domain name with a DNS A record pointing to this server, and port 80 reachable from the internet.
+
+```bash
+# Start nginx first (using a self-signed cert as a placeholder):
+bash certs/generate-self-signed.sh
+docker compose up -d nginx
+
+# Then replace with the trusted certificate:
+bash scripts/letsencrypt-setup.sh your.domain.com admin@example.com
+```
+
+The script obtains the certificate, links it into place, reloads nginx, and prints a `crontab` entry for automatic renewal.
+
+#### Option C — Existing reverse proxy / SSL offload
+
+If TLS is already handled upstream (hardware load balancer, existing nginx, cloud proxy), use the bare compose file instead. It exposes port 8000 directly without the bundled nginx:
+
+```bash
+docker compose -f docker-compose.template.yml up -d
+```
+
+Your upstream proxy must pass `Upgrade`/`Connection` headers for the `/ws` WebSocket path and set `X-Forwarded-Proto: https`.
+
+### 5. Start
 
 ```bash
 docker compose up -d
 ```
 
-Pulls the image and starts the container. The RTP gateway and web backend run together inside a single container managed by supervisord. `network_mode: host` is used for direct RTP/SIP UDP access.
+Pulls the gateway and nginx images and starts both containers. The RTP gateway and web backend run together inside the gateway container managed by supervisord. `network_mode: host` is used for direct RTP/SIP UDP access; nginx bridges to it via the host network.
 
-### 5. Access the web UI
+### 6. Access the web UI
 
-Open `http://<your-host-ip>:8000` in a browser.
+Open `https://<your-host-ip>` in a browser. (If using a self-signed certificate your browser will warn — accept the exception to proceed.)
 
 Default credentials: **admin / changeme**
 
@@ -181,8 +220,17 @@ docker compose exec ignition-hf-gateway reset_admin_password.sh
 
 ```
 hf-gateway-deploy/
-├── docker-compose.yml        — service definition (pulls from GHCR)
-├── .env.example              — version + port settings
+├── docker-compose.yml        — default: gateway + nginx SSL termination
+├── docker-compose.template.yml — bare: gateway only, for existing SSL infrastructure
+├── .env.example              — version pin settings
+├── nginx/
+│   └── nginx.conf            — nginx: HTTP→HTTPS redirect, WebSocket upgrade, proxy config
+├── certs/
+│   ├── generate-self-signed.sh — generates certs/fullchain.pem + privkey.pem
+│   ├── fullchain.pem         — TLS certificate (gitignored — generated locally)
+│   └── privkey.pem           — TLS private key  (gitignored — generated locally)
+├── scripts/
+│   └── letsencrypt-setup.sh  — obtain a trusted cert via Let's Encrypt (certbot)
 ├── config/
 │   ├── starter_config.jsonc  — copy this to config.jsonc to get started
 │   └── config.jsonc          — your active config (gitignored)
@@ -194,6 +242,8 @@ hf-gateway-deploy/
 ```
 
 The `prompts/` directory is mounted at `/prompts` inside the container. Replace either WAV file with your own 8 kHz mono PCM WAV to customise call audio. IVR flow prompt files uploaded via the web UI are also stored here.
+
+Certificate files (`*.pem`, `*.key`, `*.crt`) are excluded from git by `certs/.gitignore` and must be generated locally on each host.
 
 ---
 
@@ -253,7 +303,7 @@ tail -f ./logs/backend.log
 
 Look for WebSocket or web audio errors. Common causes:
 - Web Audio feature not licensed — check Settings → License in the UI
-- Browser requires HTTPS for microphone access — use a reverse proxy (nginx/Caddy) with TLS if accessing from a remote device
+- Browser microphone access requires HTTPS — ensure you are accessing the UI via `https://` (the default compose includes nginx for this; if using the bare template compose, add TLS upstream)
 - `web_audio.enabled` is `false` for the radio in config
 
 ### SIP registration failing
