@@ -156,7 +156,7 @@ Your upstream proxy must pass `Upgrade`/`Connection` headers for the `/ws` WebSo
 docker compose up -d
 ```
 
-Pulls the gateway and nginx images and starts both containers. The RTP gateway and web backend run together inside the gateway container managed by supervisord. `network_mode: host` is used for direct RTP/SIP UDP access; nginx bridges to it via the host network.
+Pulls three images and starts all containers. The RTP gateway and web backend run together inside the gateway container managed by supervisord. `kokoro-tts` provides offline neural text-to-speech for IVR prompt generation. `network_mode: host` is used for direct RTP/SIP UDP access; nginx and kokoro reach the gateway via the host network.
 
 ### 6. Access the web UI
 
@@ -172,10 +172,11 @@ Default credentials: **admin / changeme**
 
 For hosts with no internet access, export the Docker images on a connected machine, transfer them, and load them on the target.
 
-Two images are required:
+Three images are required:
 | Image | Purpose |
 |---|---|
 | `ghcr.io/ignitionnetworks/ignition-hf-gateway:<version>` | Gateway + web backend |
+| `ghcr.io/remsky/kokoro-fastapi-cpu:latest` | Offline neural TTS for IVR prompts |
 | `nginx:alpine` | Reverse proxy / SSL termination |
 
 ### Step 1 — Export images (internet-connected machine)
@@ -185,20 +186,25 @@ Two images are required:
 VERSION=v1.2.3
 
 docker pull ghcr.io/ignitionnetworks/ignition-hf-gateway:${VERSION}
+docker pull ghcr.io/remsky/kokoro-fastapi-cpu:latest
 docker pull nginx:alpine
 
 docker save ghcr.io/ignitionnetworks/ignition-hf-gateway:${VERSION} \
     | gzip > ignition-hf-gateway-${VERSION}.tar.gz
+
+docker save ghcr.io/remsky/kokoro-fastapi-cpu:latest \
+    | gzip > kokoro-fastapi-cpu.tar.gz
 
 docker save nginx:alpine | gzip > nginx-alpine.tar.gz
 ```
 
 ### Step 2 — Transfer to the target host
 
-Copy both `.tar.gz` files and the contents of this repository to the airgapped host via USB drive, secure file transfer, or your organisation's approved media:
+Copy all `.tar.gz` files and the contents of this repository to the airgapped host via USB drive, secure file transfer, or your organisation's approved media:
 
 ```
 ignition-hf-gateway-v1.2.3.tar.gz
+kokoro-fastapi-cpu.tar.gz
 nginx-alpine.tar.gz
 hf-gateway-deploy/          ← this repository
 ```
@@ -207,13 +213,14 @@ hf-gateway-deploy/          ← this repository
 
 ```bash
 docker load < ignition-hf-gateway-v1.2.3.tar.gz
+docker load < kokoro-fastapi-cpu.tar.gz
 docker load < nginx-alpine.tar.gz
 ```
 
-Confirm both images are present:
+Confirm all images are present:
 
 ```bash
-docker images | grep -E "ignition-hf-gateway|nginx"
+docker images | grep -E "ignition-hf-gateway|kokoro|nginx"
 ```
 
 ### Step 4 — Pin the version and start

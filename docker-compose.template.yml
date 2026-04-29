@@ -36,3 +36,10 @@ services:
       - IGNITION_MSG_DB=/data/messages.db
       - IGNITION_PROMPT_DIR=/prompts
     restart: unless-stopped
+
+  kokoro-tts:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
+    network_mode: host          # gateway reaches it at localhost:8880
+    environment:
+      - DEFAULT_VOICE=am_michael
+    restart: unless-stopped
