@@ -1,6 +1,37 @@
 {
+  // IPC socket — must match the path the C++ gateway binds to.
+  // Do not change unless you have a specific reason to.
   "ipc": {
     "socket_path": "/tmp/ignition_hf_gateway.sock"
   },
-  "radios": []
+
+  // Add at least one radio entry before starting the gateway.
+  // Copy a block from config.jsonc.example and fill in the radio IP and RTP settings.
+  "radios": [],
+
+  // License — obtain a registration_code from the web UI at /api/license
+  // after first boot.  The unique_key shown there is the value to license.
+  "license": {
+    "registration_code": "",
+    "app_id": 5
+  },
+
+  // ICE integration — optional.  Remove or set enabled: false to disable.
+  "ice": {
+    "enabled": false,
+    "hostname": "",
+    "api_key": "",
+    "prefix": "HF"
+  },
+
+  // SMTP email notifications — optional.  Set enabled: false to disable.
+  "smtp": {
+    "enabled": false,
+    "host": "",
+    "port": 587,
+    "username": "",
+    "password": "",
+    "from_address": "noreply@example.com",
+    "use_tls": true
+  }
 }

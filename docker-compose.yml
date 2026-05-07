@@ -28,11 +28,8 @@ services:
       - ./data:/data
       - ./logs:/logs
     environment:
-      - IGNITION_CONFIG=/config/config.jsonc
-      - IGNITION_LOG_DIR=/logs
-      - IGNITION_AUTH_DB=/data/auth.db
-      - IGNITION_MSG_DB=/data/messages.db
-      - IGNITION_PROMPT_DIR=/prompts
+      - CODAN_CONFIG=/config/config.jsonc
+      - CODAN_LOG_DIR=/logs
     restart: unless-stopped
 
   kokoro-tts:
