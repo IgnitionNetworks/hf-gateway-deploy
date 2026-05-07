@@ -33,6 +33,7 @@ services:
       - IGNITION_UI_DIST=/app/web_ui/dist
       - IGNITION_AUTH_DB=/data/auth.db
       - IGNITION_MSG_DB=/data/messages.db
+      - IGNITION_BACKEND_PORT=${IGNITION_BACKEND_PORT:-8765}
     restart: unless-stopped
 
   kokoro-tts:
