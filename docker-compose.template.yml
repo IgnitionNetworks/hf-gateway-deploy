@@ -43,3 +43,11 @@ services:
     environment:
       - DEFAULT_VOICE=am_michael
     restart: unless-stopped
+
+  coturn:
+    image: coturn/coturn:latest
+    network_mode: host            # required: TURN relay needs direct UDP port binding
+    volumes:
+      - ./certs:/etc/coturn/ssl:ro
+      - ./coturn.conf:/etc/coturn/turnserver.conf:ro
+    restart: unless-stopped

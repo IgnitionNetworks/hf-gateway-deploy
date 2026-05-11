@@ -21,7 +21,7 @@ openssl req -x509 -nodes -newkey rsa:4096 \
     -subj   "/CN=ignition-hf-gateway/O=Ignition Networks" \
     -addext "subjectAltName=IP:127.0.0.1"
 
-chmod 600 "${SCRIPT_DIR}/privkey.pem"
+chmod 644 "${SCRIPT_DIR}/privkey.pem"
 chmod 644 "${SCRIPT_DIR}/fullchain.pem"
 
 echo ""

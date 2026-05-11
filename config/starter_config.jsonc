@@ -33,5 +33,17 @@
     "password": "",
     "from_address": "noreply@example.com",
     "use_tls": true
+  },
+
+  // WebRTC browser audio — requires coturn running (included in docker-compose.yml).
+  // Generate a turn_secret with: openssl rand -hex 32
+  // It must match static-auth-secret in coturn.conf.
+  // Leave public_host blank to auto-detect the server's public IP via ipify.org.
+  // Open inbound firewall ports: UDP 49152-49200, TCP/UDP 3478, TCP/UDP 5349.
+  "webrtc": {
+    "public_host": "",
+    "turn_secret": "",
+    "media_port_min": 49152,
+    "media_port_max": 49200
   }
 }
