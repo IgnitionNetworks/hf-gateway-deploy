@@ -322,6 +322,27 @@ Then pull and restart as above. To roll back, set `VERSION` to the previous tag 
 
 See the **Air-gap Installation** section below for how to transfer a new image to an isolated host.
 
+### Automatic updates (Watchtower)
+
+Watchtower is included in both compose files and watches only the `ignition-hf-gateway` container. When a new image is published to GHCR it pulls the image and restarts the container automatically — typically within 5 minutes of a release.
+
+**Setup:** add your GHCR credentials to `.env`:
+
+```bash
+GHCR_USER=your-github-username
+GHCR_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx   # PAT with read:packages scope
+```
+
+Generate a token at <https://github.com/settings/tokens> — enable the **read:packages** scope only.
+
+Watchtower will log each check and any updates to the Docker daemon log:
+
+```bash
+docker compose logs watchtower
+```
+
+To disable automatic updates (e.g. for a pinned production release), either remove the `watchtower` service or set `VERSION=v1.2.3` in `.env` — Watchtower will not downgrade a pinned tag.
+
 ### Reset admin password
 
 If you are locked out of the admin account:
