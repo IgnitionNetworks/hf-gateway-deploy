@@ -34,8 +34,13 @@ services:
       - IGNITION_AUTH_DB=/data/auth.db
       - IGNITION_MSG_DB=/data/messages.db
       - IGNITION_BACKEND_PORT=${IGNITION_BACKEND_PORT:-8765}
+      # Auto-update: the app schedules + triggers updates via Watchtower's HTTP API
+      # (published on the loopback below). The token gates the API; set it in .env.
+      - WATCHTOWER_URL=http://127.0.0.1:8080
+      - WATCHTOWER_TOKEN=${WATCHTOWER_TOKEN:-}
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+      - "com.centurylinklabs.watchtower.scope=hfgw"
     restart: unless-stopped
 
   kokoro-tts:
@@ -58,15 +63,25 @@ services:
       - "host.docker.internal:host-gateway"           # reaches gateway on host network
     restart: unless-stopped
 
+  # Watchtower runs in HTTP-API mode (no continuous polling). The app owns the
+  # schedule via its Auto-Update config (toggle + daily time) and the "Update now"
+  # button; both POST /v1/update to this API. Scoped to "hfgw" so it only manages
+  # this stack and never races the radiocontrol watchtower on the shared socket.
   watchtower:
     image: containrrr/watchtower:1.7.1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "127.0.0.1:8080:8080"   # HTTP API — reachable by the host-network gateway
     environment:
       - REPO_USER=${GHCR_USER:-}
       - REPO_PASS=${GHCR_TOKEN:-}
       - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_SCOPE=hfgw
       - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_POLL_INTERVAL=300
+      - WATCHTOWER_HTTP_API_UPDATE=true
+      - WATCHTOWER_HTTP_API_TOKEN=${WATCHTOWER_TOKEN:-}
       - DOCKER_API_VERSION=1.40
+    labels:
+      - "com.centurylinklabs.watchtower.scope=hfgw"
     restart: unless-stopped
